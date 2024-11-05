@@ -1,31 +1,45 @@
 import { Handler } from "aws-lambda";
 
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, ScanCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient, GetCommand } from "@aws-sdk/lib-dynamodb";
 
 const ddbDocClient = createDDbDocClient();
 
 export const handler: Handler = async (event, context) => {
   try {
     // Print Event
-    console.log("Event: ", event);
+    console.log("Event: ", JSON.stringify(event?.queryStringParameters));
+    const parameters = event?.queryStringParameters;
+    const bookId = parameters ? parseInt(parameters.bookId) : undefined;
 
-    const commandOutput = await ddbDocClient.send(
-      new ScanCommand({
-        TableName: process.env.TABLE_NAME,
-      })
-    );
-    if (!commandOutput.Items) {
+    if (!bookId) {
       return {
         statusCode: 404,
         headers: {
           "content-type": "application/json",
         },
-        body: JSON.stringify({ Message: "Invalid movie Id" }),
+        body: JSON.stringify({ Message: "Missing Book Id" }),
+      };
+    }
+
+    const commandOutput = await ddbDocClient.send(
+      new GetCommand({
+        TableName: process.env.TABLE_NAME,
+        Key: { id: bookId },
+      })
+    );
+    console.log("GetCommand response: ", commandOutput);
+    if (!commandOutput.Item) {
+      return {
+        statusCode: 404,
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ Message: "Invalid book Id" }),
       };
     }
     const body = {
-      data: commandOutput.Items,
+      data: commandOutput.Item,
     };
 
     // Return Response

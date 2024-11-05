@@ -6,75 +6,116 @@ import * as custom from "aws-cdk-lib/custom-resources";
 import { Construct } from "constructs";
 // import * as sqs from 'aws-cdk-lib/aws-sqs';
 import { generateBatch } from "../shared/util";
-import { movies } from "../seed/movies";
+import { books } from "../seed/books";
+import * as apig from "aws-cdk-lib/aws-apigateway";
 
 export class RestAPIStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
     // Tables 
-    const moviesTable = new dynamodb.Table(this, "MoviesTable", {
+    const booksTable = new dynamodb.Table(this, "BooksTable", {
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       partitionKey: { name: "id", type: dynamodb.AttributeType.NUMBER },
       removalPolicy: cdk.RemovalPolicy.DESTROY,
-      tableName: "Movies",
+      tableName: "Books",
     });
 
     
     // Functions 
-    const getMovieByIdFn = new lambdanode.NodejsFunction(
+    const getBookByIdFn = new lambdanode.NodejsFunction(
       this,
-      "GetMovieByIdFn",
+      "GetBookByIdFn",
       {
         architecture: lambda.Architecture.ARM_64,
         runtime: lambda.Runtime.NODEJS_18_X,
-        entry: `${__dirname}/../lambdas/getMovieById.ts`,
+        entry: `${__dirname}/../lambdas/getBookById.ts`,
         timeout: cdk.Duration.seconds(10),
         memorySize: 128,
         environment: {
-          TABLE_NAME: moviesTable.tableName,
+          TABLE_NAME: booksTable.tableName,
           REGION: 'eu-west-1',
         },
       }
       );
       
-      const getAllMoviesFn = new lambdanode.NodejsFunction(
+      const getAllBooksFn = new lambdanode.NodejsFunction(
         this,
-        "GetAllMoviesFn",
+        "GetAllBooksFn",
         {
           architecture: lambda.Architecture.ARM_64,
           runtime: lambda.Runtime.NODEJS_18_X,
-          entry: `${__dirname}/../lambdas/getAllMovies.ts`,
+          entry: `${__dirname}/../lambdas/getAllBooks.ts`,
           timeout: cdk.Duration.seconds(10),
           memorySize: 128,
           environment: {
-            TABLE_NAME: moviesTable.tableName,
+            TABLE_NAME: booksTable.tableName,
             REGION: 'eu-west-1',
           },
         }
         );
         
-        new custom.AwsCustomResource(this, "moviesddbInitData", {
+        const newBookFn = new lambdanode.NodejsFunction(this, "AddBookFn", {
+          architecture: lambda.Architecture.ARM_64,
+          runtime: lambda.Runtime.NODEJS_16_X,
+          entry: `${__dirname}/../lambdas/addBooks.ts`,
+          timeout: cdk.Duration.seconds(10),
+          memorySize: 128,
+          environment: {
+            TABLE_NAME: booksTable.tableName,
+            REGION: "eu-west-1",
+          },
+        });
+
+        new custom.AwsCustomResource(this, "booksddbInitData", {
           onCreate: {
             service: "DynamoDB",
             action: "batchWriteItem",
             parameters: {
               RequestItems: {
-                [moviesTable.tableName]: generateBatch(movies),
+                [booksTable.tableName]: generateBatch(books),
               },
             },
-            physicalResourceId: custom.PhysicalResourceId.of("moviesddbInitData"), //.of(Date.now().toString()),
+            physicalResourceId: custom.PhysicalResourceId.of("booksddbInitData"), //.of(Date.now().toString()),
           },
           policy: custom.AwsCustomResourcePolicy.fromSdkCalls({
-            resources: [moviesTable.tableArn],
+            resources: [booksTable.tableArn],
           }),
         });
         
         // Permissions 
-        moviesTable.grantReadData(getMovieByIdFn)
-        moviesTable.grantReadData(getAllMoviesFn)
+        booksTable.grantReadData(getBookByIdFn)
+        booksTable.grantReadData(getAllBooksFn)
+        booksTable.grantReadWriteData(newBookFn)
         
-        
+        const api = new apig.RestApi(this, "RestAPI", {
+          description: "demo api",
+          deployOptions: {
+            stageName: "dev",
+          },
+          defaultCorsPreflightOptions: {
+            allowHeaders: ["Content-Type", "X-Amz-Date"],
+            allowMethods: ["OPTIONS", "GET", "POST", "PUT", "PATCH", "DELETE"],
+            allowCredentials: true,
+            allowOrigins: ["*"],
+          },
+        });
+
+        const booksEndpoint = api.root.addResource("books");
+        booksEndpoint.addMethod(
+          "GET",
+          new apig.LambdaIntegration(getAllBooksFn, { proxy: true })
+        );
+        booksEndpoint.addMethod(
+          "POST",
+          new apig.LambdaIntegration(newBookFn, { proxy: true })
+        );
+    
+        const bookEndpoint = booksEndpoint.addResource("{bookId}");
+        bookEndpoint.addMethod(
+          "GET",
+          new apig.LambdaIntegration(getBookByIdFn, { proxy: true })
+        );
       }
     }
     
