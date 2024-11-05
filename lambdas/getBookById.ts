@@ -1,16 +1,15 @@
-import { Handler } from "aws-lambda";
 
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, GetCommand } from "@aws-sdk/lib-dynamodb";
+import { APIGatewayProxyHandlerV2 } from "aws-lambda";
 
 const ddbDocClient = createDDbDocClient();
 
-export const handler: Handler = async (event, context) => {
+export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
   try {
-    // Print Event
-    console.log("Event: ", JSON.stringify(event?.queryStringParameters));
-    const parameters = event?.queryStringParameters;
-    const bookId = parameters ? parseInt(parameters.bookId) : undefined;
+    console.log("[EVENT]", JSON.stringify(event));
+    const parameters = event?.pathParameters;
+    const bookId = parameters?.bookId ? parseInt(parameters.bookId) : undefined;
 
     if (!bookId) {
       return {
@@ -18,7 +17,7 @@ export const handler: Handler = async (event, context) => {
         headers: {
           "content-type": "application/json",
         },
-        body: JSON.stringify({ Message: "Missing Book Id" }),
+        body: JSON.stringify({ Message: "Missing book Id" }),
       };
     }
 

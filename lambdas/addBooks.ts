@@ -5,7 +5,7 @@ import Ajv from "ajv";
 import schema from "../shared/types.schema.json";
 
 const ajv = new Ajv();
-const isValidBodyParams = ajv.compile(schema.definitions["Movie"] || {});
+const isValidBodyParams = ajv.compile(schema.definitions["Book"] || {});
 
 const ddbDocClient = createDDbDocClient();
 
@@ -31,8 +31,8 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
             "content-type": "application/json",
           },
           body: JSON.stringify({
-            message: `Incorrect type. Must match Movie schema`,
-            schema: schema.definitions["Movie"],
+            message: `Incorrect type. Must match Book schema`,
+            schema: schema.definitions["Book"],
           }),
         };
       }
@@ -48,7 +48,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
       headers: {
         "content-type": "application/json",
       },
-      body: JSON.stringify({ message: "Movie added" }),
+      body: JSON.stringify({ message: "Book added" }),
     };
   } catch (error: any) {
     console.log(JSON.stringify(error));
