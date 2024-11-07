@@ -13,3 +13,4 @@ export type Book = {
   ratings_count: number;
   is_ebook: boolean;
 }
+

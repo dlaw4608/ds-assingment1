@@ -55,7 +55,7 @@ export class RestAPIStack extends cdk.Stack {
         }
         );
         
-        const newBookFn = new lambdanode.NodejsFunction(this, "AddBookFn", {
+      const newBookFn = new lambdanode.NodejsFunction(this, "AddBookFn", {
           architecture: lambda.Architecture.ARM_64,
           runtime: lambda.Runtime.NODEJS_16_X,
           entry: `${__dirname}/../lambdas/addBooks.ts`,
@@ -66,6 +66,22 @@ export class RestAPIStack extends cdk.Stack {
             REGION: "eu-west-1",
           },
         });
+
+      const updateBookFn = new lambdanode.NodejsFunction(
+        this,
+        "updateBooks",
+        {
+          architecture: lambda.Architecture.ARM_64,
+          runtime: lambda.Runtime.NODEJS_18_X,
+          entry: `${__dirname}/../lambdas/updateBooks.ts`,
+          timeout: cdk.Duration.seconds(10),
+          memorySize: 128,
+          environment: {
+            TABLE_NAME: booksTable.tableName,
+            REGION: 'eu-west-1',
+          },
+        }
+        );
 
         new custom.AwsCustomResource(this, "booksddbInitData", {
           onCreate: {
@@ -87,6 +103,7 @@ export class RestAPIStack extends cdk.Stack {
         booksTable.grantReadData(getBookByIdFn)
         booksTable.grantReadData(getAllBooksFn)
         booksTable.grantReadWriteData(newBookFn)
+        booksTable.grantReadWriteData(updateBookFn)
         
         const api = new apig.RestApi(this, "RestAPI", {
           description: "demo api",
@@ -112,9 +129,15 @@ export class RestAPIStack extends cdk.Stack {
         );
     
         const bookEndpoint = booksEndpoint.addResource("{bookId}");
+        
         bookEndpoint.addMethod(
           "GET",
           new apig.LambdaIntegration(getBookByIdFn, { proxy: true })
+        );
+
+        bookEndpoint.addMethod(
+          "PUT",
+          new apig.LambdaIntegration(updateBookFn, { proxy: true })
         );
       }
     }

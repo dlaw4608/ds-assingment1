@@ -8,7 +8,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
   try {
     console.log("[EVENT]", JSON.stringify(event));
 
-    // Extract bookId from path parameters
+   
     const parameters = event?.pathParameters;
     const bookId = parameters?.bookId ? parseInt(parameters.bookId) : undefined;
 
@@ -22,7 +22,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
       };
     }
 
-    // Parse the request body
+    
     const body = event.body ? JSON.parse(event.body) : undefined;
     if (!body) {
       return {
@@ -34,35 +34,66 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
       };
     }
 
-    // Construct the UpdateCommand parameters (No type annotation needed)
+
+    let updateExpression = "SET ";
+    const expressionAttributeNames: { [key: string]: string } = {};
+    const expressionAttributeValues: { [key: string]: any } = {};
+
+    if (body.title) {
+      updateExpression += "#title = :title, ";
+      expressionAttributeNames["#title"] = "title";
+      expressionAttributeValues[":title"] = body.title;
+    }
+    if (body.author) {
+      updateExpression += "#author = :author, ";
+      expressionAttributeNames["#author"] = "author";
+      expressionAttributeValues[":author"] = body.author;
+    }
+    if (body.synopsis) {
+      updateExpression += "#synopsis = :synopsis, ";
+      expressionAttributeNames["#synopsis"] = "synopsis";
+      expressionAttributeValues[":synopsis"] = body.synopsis;
+    }
+    if (body.page_count !== undefined) {
+      updateExpression += "#pageCount = :pageCount, ";
+      expressionAttributeNames["#pageCount"] = "page_count";
+      expressionAttributeValues[":pageCount"] = body.page_count;
+    }
+    if (body.popularity !== undefined) {
+      updateExpression += "#popularity = :popularity, ";
+      expressionAttributeNames["#popularity"] = "popularity";
+      expressionAttributeValues[":popularity"] = body.popularity;
+    }
+    if (body.average_rating !== undefined) {
+      updateExpression += "#averageRating = :averageRating, ";
+      expressionAttributeNames["#averageRating"] = "average_rating";
+      expressionAttributeValues[":averageRating"] = body.average_rating;
+    }
+
+  
+    updateExpression = updateExpression.slice(0, -2);
+
+   
+    if (Object.keys(expressionAttributeValues).length === 0) {
+      return {
+        statusCode: 400,
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ message: "No valid fields provided for update" }),
+      };
+    }
+
+   
     const updateParams = {
       TableName: process.env.TABLE_NAME!,
-      Key: { id: bookId }, // Use bookId as the partition key
-      UpdateExpression: `
-        SET #title = :title,
-            #author = :author,
-            #synopsis = :synopsis,
-            #pageCount = :pageCount,
-            #popularity = :popularity
-      `,
-      ExpressionAttributeNames: {
-        "#title": "title",
-        "#author": "author",
-        "#synopsis": "synopsis",
-        "#pageCount": "page_count",
-        "#popularity": "popularity",
-      },
-      ExpressionAttributeValues: {
-        ":title": body.title,
-        ":author": body.author,
-        ":synopsis": body.synopsis,
-        ":pageCount": body.page_count,
-        ":popularity": body.popularity,
-      },
-      ReturnValues: "UPDATED_NEW", // Use string directly
+      Key: { id: bookId },
+      UpdateExpression: updateExpression,
+      ExpressionAttributeNames: expressionAttributeNames,
+      ExpressionAttributeValues: expressionAttributeValues,
+      ReturnValues: "UPDATED_NEW",
     };
 
-    // Execute the UpdateCommand
     const commandOutput = await ddbDocClient.send(new UpdateCommand(updateParams));
 
     return {
