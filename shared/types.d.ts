@@ -1,16 +1,28 @@
 export type Book = {
   id: number;
-  cover_image_path: string;
-  genre_ids: number[];
-  original_language: string;
-  original_title: string;
+  coverImagePath: string;
+  genreIds: number[];
+  originalLanguage: string;
+  originalTitle: string;
   author: string;
-  publication_date: string;
+  publicationDate: string;
   synopsis: string;
-  page_count: number;
+  pageCount: number;
   popularity: number;
-  average_rating: number;
-  ratings_count: number;
-  is_ebook: boolean;
+  averageRating: number;
+  ratingsCount: number;
+  isEbook: boolean;
 }
 
+export type BookPublisher = {
+  bookId: number;
+  publisherName: string;
+  country: string;
+  publisherDescription: string;
+}
+
+export type BookPublisherQueryParams = {
+  bookId: string;
+  publisherName?: string;
+  country?: string;
+}

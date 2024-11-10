@@ -6,7 +6,7 @@ import * as custom from "aws-cdk-lib/custom-resources";
 import { Construct } from "constructs";
 // import * as sqs from 'aws-cdk-lib/aws-sqs';
 import { generateBatch } from "../shared/util";
-import { books } from "../seed/books";
+import { books, bookPublishers } from "../seed/books";
 import * as apig from "aws-cdk-lib/aws-apigateway";
 
 export class RestAPIStack extends cdk.Stack {
@@ -21,7 +21,19 @@ export class RestAPIStack extends cdk.Stack {
       tableName: "Books",
     });
 
-    
+    const bookPublisherTable = new dynamodb.Table(this, "BookPublisherTable", {
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      partitionKey: { name: "bookId", type: dynamodb.AttributeType.NUMBER },
+      sortKey: { name: "publisherName", type: dynamodb.AttributeType.STRING },
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      tableName: "BookPublisher",
+    });
+
+    bookPublisherTable.addLocalSecondaryIndex({
+      indexName: "countryIx",
+      sortKey: { name: "country", type: dynamodb.AttributeType.STRING },
+    });
+
     // Functions 
     const getBookByIdFn = new lambdanode.NodejsFunction(
       this,
@@ -57,7 +69,7 @@ export class RestAPIStack extends cdk.Stack {
         
       const newBookFn = new lambdanode.NodejsFunction(this, "AddBookFn", {
           architecture: lambda.Architecture.ARM_64,
-          runtime: lambda.Runtime.NODEJS_16_X,
+          runtime: lambda.Runtime.NODEJS_18_X,
           entry: `${__dirname}/../lambdas/addBooks.ts`,
           timeout: cdk.Duration.seconds(10),
           memorySize: 128,
@@ -90,20 +102,37 @@ export class RestAPIStack extends cdk.Stack {
             parameters: {
               RequestItems: {
                 [booksTable.tableName]: generateBatch(books),
+                [bookPublisherTable.tableName]: generateBatch(bookPublishers),
               },
             },
             physicalResourceId: custom.PhysicalResourceId.of("booksddbInitData"), //.of(Date.now().toString()),
           },
           policy: custom.AwsCustomResourcePolicy.fromSdkCalls({
-            resources: [booksTable.tableArn],
+            resources: [booksTable.tableArn, bookPublisherTable.tableArn],
           }),
         });
         
+        const getBookPublisherFn = new lambdanode.NodejsFunction(
+          this,
+          "GetBookPublisherFn",
+          {
+            architecture: lambda.Architecture.ARM_64,
+            runtime: lambda.Runtime.NODEJS_18_X,
+            entry: `${__dirname}/../lambdas/getBookPublisher.ts`,
+            timeout: cdk.Duration.seconds(10),
+            memorySize: 128,
+            environment: {
+              TABLE_NAME: bookPublisherTable.tableName,
+              REGION: "eu-west-1",
+            },
+          }
+        );
         // Permissions 
         booksTable.grantReadData(getBookByIdFn)
         booksTable.grantReadData(getAllBooksFn)
         booksTable.grantReadWriteData(newBookFn)
         booksTable.grantReadWriteData(updateBookFn)
+        bookPublisherTable.grantReadData(getBookPublisherFn)
         
         const api = new apig.RestApi(this, "RestAPI", {
           description: "demo api",
@@ -139,6 +168,11 @@ export class RestAPIStack extends cdk.Stack {
           "PUT",
           new apig.LambdaIntegration(updateBookFn, { proxy: true })
         );
+
+        const bookPublishersEndpoint = booksEndpoint.addResource("publisher");
+        bookPublishersEndpoint.addMethod(
+        "GET",
+        new apig.LambdaIntegration(getBookPublisherFn, { proxy: true })
+  );
       }
     }
-    
