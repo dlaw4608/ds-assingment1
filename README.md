@@ -8,18 +8,13 @@ __Demo:__
 
 The context of my WebAPI I developed was to store Books, the books are designed to be stored with the following information:
 
-  id: number; // Book Unique Identifier
-  genreIds: number[];  // Genre of Book to be stored
-  originalLanguage: string; // 
-  originalTitle: string;
-  author: string;
-  publicationDate: string;
-  synopsis: string;
-  pageCount: number;
-  popularity: number;
-  averageRating: number;
-  ratingsCount: number;
-  isEbook: boolean;
+  + id: number; // Book Unique Identifier
+  + genreIds: number[];  // Genre of Book to be stored
+  + originalLanguage: string; // 
+  + originalTitle: string;
+  + author: string;
+  + publicationDate: string;
+  + synopsis: string;
 
 
 
@@ -32,7 +27,7 @@ The context of my WebAPI I developed was to store Books, the books are designed 
 + GET /books/{bookId}/ - Get specific book with a specified book ID.
 + GET /books/{bookId}/publisher?bookId & publisherName - Get Information about publisher using Query String parameter (Protected Route)
 + PUT /books/{bookId} - Update an existing book by its ID. (Protected Route)
-+ 
+
 
 ### Auth API endpoints.
 + POST /auth/signup - Sign up a new user.
