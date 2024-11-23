@@ -4,10 +4,10 @@ import * as apig from "aws-cdk-lib/aws-apigateway";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as node from "aws-cdk-lib/aws-lambda-nodejs";
 
-type AuthApiProps = {
+export interface AuthApiProps extends cdk.StackProps {
   userPoolId: string;
   userPoolClientId: string;
-};
+}
 
 export class AuthApi extends Construct {
   private auth: apig.IResource;
@@ -31,14 +31,7 @@ export class AuthApi extends Construct {
     this.auth = api.root.addResource("auth");
 
     this.addAuthRoute("signup", "POST", "SignupFn", "signup.ts");
-
-    this.addAuthRoute(
-      "confirm_signup",
-      "POST",
-      "ConfirmFn",
-      "confirm-signup.ts"
-    );
-
+    this.addAuthRoute("confirm_signup", "POST", "ConfirmFn", "confirm-signup.ts");
     this.addAuthRoute("signout", "GET", "SignoutFn", "signout.ts");
     this.addAuthRoute("signin", "POST", "SigninFn", "signin.ts");
   }

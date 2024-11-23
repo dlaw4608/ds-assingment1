@@ -18,12 +18,12 @@ const client = new CognitoIdentityProviderClient({ region: process.env.REGION })
 
 export const handler: APIGatewayProxyHandlerV2 = async (event) => {
   try {
-    console.log("[EVENT]",JSON.stringify(event));
+    console.log("[EVENT]", JSON.stringify(event));
     const body = event.body ? JSON.parse(event.body) : undefined;
 
     if (!isValidBodyParams(body)) {
       return {
-        statusCode: 500,
+        statusCode: 400,
         headers: {
           "content-type": "application/json",
         },
@@ -52,10 +52,11 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
       }),
     };
   } catch (err) {
+    console.error(err);
     return {
       statusCode: 500,
       body: JSON.stringify({
-        message: err,
+        message: err.message || "Internal server error",
       }),
     };
   }

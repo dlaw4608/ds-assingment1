@@ -1,11 +1,10 @@
-import * as cdk from "aws-cdk-lib";
-import { Aws } from "aws-cdk-lib";
+/*import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { UserPool } from "aws-cdk-lib/aws-cognito";
 import * as apig from "aws-cdk-lib/aws-apigateway";
-import * as iam from "aws-cdk-lib/aws-iam";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as node from "aws-cdk-lib/aws-lambda-nodejs";
+
 export class AuthApiStack extends cdk.Stack {
   private auth: apig.IResource;
   private userPoolId: string;
@@ -56,7 +55,7 @@ export class AuthApiStack extends cdk.Stack {
     this.addAuthRoute('signout', 'GET', 'SignoutFn', 'signout.ts');
     this.addAuthRoute('signin', 'POST', 'SigninFn', 'signin.ts');
 
-    const appApi = new apig.RestApi(this, "AppApi", {
+    const restAPIStack = new apig.RestApi(this, "restAPIStack", {
       description: "App RestApi",
       endpointTypes: [apig.EndpointType.REGIONAL],
       defaultCorsPreflightOptions: {
@@ -77,9 +76,9 @@ export class AuthApiStack extends cdk.Stack {
       },
     };
 
-    const protectedRes = appApi.root.addResource("protected");
+    const protectedRes = restAPIStack.root.addResource("protected");
 
-    const publicRes = appApi.root.addResource("public");
+    const publicRes = restAPIStack.root.addResource("public");
 
     const protectedFn = new node.NodejsFunction(this, "ProtectedFn", {
       ...appCommonFnProps,
@@ -147,3 +146,4 @@ export class AuthApiStack extends cdk.Stack {
   }  // end private method
 }
 
+*/

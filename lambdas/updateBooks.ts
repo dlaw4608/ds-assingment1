@@ -91,7 +91,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
       UpdateExpression: updateExpression,
       ExpressionAttributeNames: expressionAttributeNames,
       ExpressionAttributeValues: expressionAttributeValues,
-      ReturnValues: "UPDATED_NEW",
+      ReturnValues: "UPDATED_NEW" as const,
     };
 
     const commandOutput = await ddbDocClient.send(new UpdateCommand(updateParams));

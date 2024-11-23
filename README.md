@@ -2,30 +2,49 @@
 
 __Name:__ Daniel Lawton
 
-__Demo:__ ... link to your YouTube video demonstration ......
+__Demo:__ 
 
 ### Context.
 
-State the context you chose for your web API and detail the attributes stored in the main database table.
+The context of my WebAPI I developed was to store Books, the books are designed to be stored with the following information:
+
+  id: number; // Book Unique Identifier
+  genreIds: number[];  // Genre of Book to be stored
+  originalLanguage: string; // 
+  originalTitle: string;
+  author: string;
+  publicationDate: string;
+  synopsis: string;
+  pageCount: number;
+  popularity: number;
+  averageRating: number;
+  ratingsCount: number;
+  isEbook: boolean;
+
+
+
+
 
 ### App API endpoints.
-
-[ Provide a bullet-point list of the app's endpoints (excluding the Auth API) you have successfully implemented. ]
-e.g.
  
-+ POST /thing - add a new 'thing'.
-+ GET /thing/{partition-key}/ - Get all the 'things' with a specified partition key.
-+ GEtT/thing/{partition-key}?attributeX=value - Get all the 'things' with a specified partition key value and attributeX satisfying the condition .....
++ Get/movies - Retrieve all books.
++ POST /books - add a new book. (Protected Route)
++ GET /books/{bookId}/ - Get specific book with a specified book ID.
++ GET /books/{bookId}/publisher?bookId & publisherName - Get Information about publisher using Query String parameter (Protected Route)
++ PUT /books/{bookId} - Update an existing book by its ID. (Protected Route)
++ 
+
+### Auth API endpoints.
++ POST /auth/signup - Sign up a new user.
++ POST /auth/confirm_signup - Confirma a new user.
++ POST /auth/signin - Sign in a user.
++ GET /auth/signout - Sign out a user.
 
 ### Update constraint (if relevant).
 
-[Briefly explain your design for the solution to the PUT/Update constraint 
-- only the user who added an item to the main table could update it.]
 
-### Translation persistence (if relevant).
+- A DynamoDB UpdateExpression is used to specify the Attributes that are to be Updated. Using the fields provided in the request body. (e.g. title, author .. etc) With thses specified fields being the only ones updated. Using placeholders that handle reserved keywords by being mapped to placeholders. This function is executed using the UpdateCommmand, with updated attributes being the response. Is only authorised for use by users who are signed into the WebAPI (Protected Route).
 
-[Briefly explain your design for the solution to avoid repeat requests to Amazon Translate - persist translations so that Amazon Translate can be bypassed for repeat translation requests.]
 
-###  Extra (If relevant).
 
-[ State whether you have created a multi-stack solution for this assignment or used lambda layers to speed up update deployments. Also, mention any aspect of the CDK framework __that was not covered in the lectures that you used in this assignment. ]
+
