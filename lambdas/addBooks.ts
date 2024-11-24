@@ -16,7 +16,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
     const body = event.body ? JSON.parse(event.body) : undefined;
     if (!body) {
       return {
-        statusCode: 500,
+        statusCode: 400,
         headers: {
           "content-type": "application/json",
         },
@@ -26,7 +26,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
      // NEW
      if (!isValidBodyParams(body)) {
         return {
-          statusCode: 500,
+          statusCode: 400,
           headers: {
             "content-type": "application/json",
           },
@@ -36,7 +36,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
           }),
         };
       }
-
+// Add Book to DynamoDB Table
     const commandOutput = await ddbDocClient.send(
       new PutCommand({
         TableName: process.env.TABLE_NAME,
