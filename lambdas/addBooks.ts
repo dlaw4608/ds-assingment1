@@ -39,7 +39,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
 // Add Book to DynamoDB Table
     const commandOutput = await ddbDocClient.send(
       new PutCommand({
-        TableName: process.env.TABLE_NAME,
+        TableName: process.env.BOOKS_TABLE,
         Item: body,
       })
     );

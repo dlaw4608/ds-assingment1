@@ -44,6 +44,8 @@ export class AppApi extends Construct {
       },
     };
 
+   
+   
     // Authorizer function
     const authorizerFn = new node.NodejsFunction(this, "AuthorizerFn", {
       ...appCommonFnProps,
@@ -62,6 +64,7 @@ export class AppApi extends Construct {
       entry: "./lambdas/getBookById.ts",
     });
 
+    const booksEndpoint = appApi.root.addResource("books");
     const getAllBooksFn = new node.NodejsFunction(this, "GetAllBooksFn", {
       ...appCommonFnProps,
       entry: "./lambdas/getAllBooks.ts",
@@ -83,7 +86,6 @@ export class AppApi extends Construct {
     });
 
     // API Endpoints
-    const booksEndpoint = appApi.root.addResource("books");
     booksEndpoint.addMethod("GET", new apig.LambdaIntegration(getAllBooksFn));
     booksEndpoint.addMethod("POST", new apig.LambdaIntegration(newBookFn), {
       authorizer: requestAuthorizer,
@@ -103,6 +105,13 @@ export class AppApi extends Construct {
       authorizationType: apig.AuthorizationType.CUSTOM,
     });
 
+    // Grant permissions
+    props.booksTable.grantReadData(getAllBooksFn);
+    props.booksTable.grantReadData(getBookByIdFn);
+    props.booksTable.grantReadWriteData(updateBookFn);
+    props.booksTable.grantReadWriteData(newBookFn);
+    props.bookPublisherTable.grantReadWriteData(getBookPublisherFn);
+   
     // Public and Protected Endpoints
     const protectedRes = appApi.root.addResource("protected");
     const publicRes = appApi.root.addResource("public");

@@ -86,7 +86,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
 
    
     const updateParams = {
-      TableName: process.env.TABLE_NAME!,
+      TableName: process.env.BOOKS_TABLE!,
       Key: { id: bookId },
       UpdateExpression: updateExpression,
       ExpressionAttributeNames: expressionAttributeNames,
